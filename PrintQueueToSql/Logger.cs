@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Configuration;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Timers;
 
 namespace PrintQueueToSql
@@ -11,7 +9,7 @@ namespace PrintQueueToSql
     class Logger
     {
         public static string logFileName;
-        private static readonly int enabled = int.Parse(ConfigurationManager.AppSettings["loggingEnabled"]);
+        public static bool enabled = int.Parse(ConfigurationManager.AppSettings["loggingEnabled"]) == 0 ? false : true;
         private static readonly int maxLogSize = int.Parse(ConfigurationManager.AppSettings["maxLogSize"]) * 1000;
         private static readonly int interval = int.Parse(ConfigurationManager.AppSettings["maintInterval"]) * 1000;
         private static readonly string path = AppDomain.CurrentDomain.BaseDirectory + "\\";
@@ -27,7 +25,7 @@ namespace PrintQueueToSql
 
         public static void WriteMessage(string Message)
         {
-            if (enabled != 0)
+            if (enabled)
             {
                 Message = "[" + DateTime.Now + "] " + Message;
                 string filePath = path + logFileName;

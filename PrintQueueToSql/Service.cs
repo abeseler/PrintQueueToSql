@@ -47,17 +47,19 @@ namespace PrintQueueToSql
             Logger.WriteMessage("Service has started...");
             serviceTimer.Elapsed += new ElapsedEventHandler(OnElapsedTime);
             serviceTimer.Interval = interval;
-            serviceTimer.Enabled = true;
+            serviceTimer.Start();
         }
 
         private void OnElapsedTime(object sender, ElapsedEventArgs e)
         {
+            serviceTimer.Stop();
+
             try
             {
                 using (SqlConnection sqlConn = new SqlConnection(ConfigurationManager.ConnectionStrings["sqlConnectionStr"].ConnectionString))
                 {
                     List<Printer> printerList = new List<Printer>();
-                    string sqlQuery = $"SELECT {sqlNameColumn},{sqlJobsColumn},{sqlStatusColumn} FROM {sqlTableName} WITH (NOLOCK)";
+                    string sqlQuery = $"SELECT {sqlNameColumn},{sqlJobsColumn},{sqlStatusColumn} FROM {sqlTableName}";
                     sqlConn.Open();
 
                     //Get list of printers to poll
@@ -79,17 +81,17 @@ namespace PrintQueueToSql
                     }
                     catch (Exception ex)
                     {
-                        Logger.WriteMessage("[ERROR] Exception occurred retrieving printer list\n" + ex.ToString());
+                        Logger.WriteMessage("[ERROR] Exception while retrieving printer list\n" + ex.ToString());
                     }
 
-                    //Poll printer queue for status and jobs and run update sproc for each one
+                    //Poll printer queue for status and jobs and run update sproc for each one if changed
                     if (printerList.Count > 0)
                     {
                         try
                         {
                             using (PrintServer printServer = new LocalPrintServer())
                             {
-                                String resultsForLog = "Print queue polling results...\n";
+                                String resultsForLog = "Polling results...\n";
 
                                 foreach (Printer printer in printerList)
                                 {
@@ -104,11 +106,9 @@ namespace PrintQueueToSql
                                     }
                                     catch (Exception ex)
                                     {
-                                        status = "[ERROR] " + ex.Message;
+                                        status = $"[POLLING ERROR] {ex.Message}";
                                         jobs = -1;
                                     }
-
-                                    resultsForLog += "\t" + printer.name + ": " + jobs + ": " + status + "\n";
 
                                     if (printer.jobs != jobs || printer.status != status)
                                     {
@@ -120,6 +120,12 @@ namespace PrintQueueToSql
                                             cmd.Parameters.AddWithValue(sqlParamJobsInQueue, jobs);
                                             cmd.ExecuteNonQuery();
                                         }
+
+                                        resultsForLog += $"\t[UPDT] {printer.name}: {jobs}: {status}\n";
+                                    }
+                                    else
+                                    {
+                                        resultsForLog += $"\t[POLL] {printer.name}: {jobs}: {status}\n";
                                     }
                                 }
                                 Logger.WriteMessage(resultsForLog);
@@ -127,7 +133,7 @@ namespace PrintQueueToSql
                         }
                         catch (Exception ex1)
                         {
-                            Logger.WriteMessage(ex1.ToString());
+                            Logger.WriteMessage("[ERROR] Exception using PrintServer\n" + ex1.ToString());
                         }
                     }
 
@@ -136,13 +142,15 @@ namespace PrintQueueToSql
             }
             catch (Exception ex)
             {
-                Logger.WriteMessage(ex.ToString());
+                Logger.WriteMessage("[ERROR] Exception in OnElapsedTime\n" + ex.ToString());
             }
+
+            serviceTimer.Start();
         }
 
         protected override void OnStop()
         {
-            Logger.WriteMessage("Service has stopped");
+            Logger.WriteMessage("Service has stopped running.");
         }
 
         public Boolean IsInstalled()

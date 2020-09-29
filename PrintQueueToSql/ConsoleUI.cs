@@ -12,7 +12,7 @@ namespace PrintQueueToSql
         private readonly Service service = new Service();
         public void Start()
         {
-            Logger.WriteMessage("Started in Console");
+            Logger.WriteMessage("Started in console");
 
             while (running)
             {
@@ -21,8 +21,7 @@ namespace PrintQueueToSql
                 string input = Console.ReadLine();
                 Console.Clear();
                 string message = HandleInput(input);
-                Console.WriteLine(message);
-                Console.WriteLine(" ");
+                Console.WriteLine(message+"\n");
             }
         }
 
@@ -30,8 +29,7 @@ namespace PrintQueueToSql
         {
             List<string> menu = new List<string>
             {
-                "Options:"
-                ," "
+                "Options:\n"
             };
             if (service.IsInstalled())
             {
@@ -41,8 +39,7 @@ namespace PrintQueueToSql
             {
                 menu.Add(" 1 - Install");
             }
-            menu.Add(" 2 - Exit");
-            menu.Add(" ");
+            menu.Add(" 2 - Exit\n");
             foreach (string item in menu)
             {
                 Console.WriteLine(item);
