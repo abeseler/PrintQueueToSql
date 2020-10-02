@@ -1,0 +1,13 @@
+USE AAD
+
+CREATE TABLE t_printer_queues (
+	printer_name		NVARCHAR(100)		UNIQUE		NOT NULL
+	,jobs			INTEGER			DEFAULT 0	NOT NULL
+	,status			NVARCHAR(MAX)		DEFAULT 'None'	NOT NULL
+	,type			NVARCHAR(10)		
+)
+
+
+GO
+GRANT SELECT,UPDATE,INSERT,DELETE ON t_printer_queues TO [AAD_USER], [WA_USER] AS [dbo]
+GO

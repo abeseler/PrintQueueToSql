@@ -14,10 +14,7 @@ namespace PrintQueueToSql
     {
         private readonly Timer serviceTimer = new Timer();
         private readonly int interval = int.Parse(ConfigurationManager.AppSettings["printerPollInterval"]);
-        private readonly string sqlTableName = ConfigurationManager.AppSettings["sqlTableName"];
-        private readonly string sqlNameColumn = ConfigurationManager.AppSettings["sqlNameColumn"];
-        private readonly string sqlJobsColumn = ConfigurationManager.AppSettings["sqlJobsColumn"];
-        private readonly string sqlStatusColumn = ConfigurationManager.AppSettings["sqlStatusColumn"];
+        private readonly string sqlSprocNameList = ConfigurationManager.AppSettings["sqlStoredProcedureList"];
         private readonly string sqlSprocNameUpdate = ConfigurationManager.AppSettings["sqlStoredProcedureUpdate"];
         private readonly string sqlParamPrinterName = ConfigurationManager.AppSettings["sqlParamPrinterName"];
         private readonly string sqlParamPrinterStatus = ConfigurationManager.AppSettings["sqlParamPrinterStatus"];
@@ -59,13 +56,12 @@ namespace PrintQueueToSql
                 using (SqlConnection sqlConn = new SqlConnection(ConfigurationManager.ConnectionStrings["sqlConnectionStr"].ConnectionString))
                 {
                     List<Printer> printerList = new List<Printer>();
-                    string sqlQuery = $"SELECT {sqlNameColumn},{sqlJobsColumn},{sqlStatusColumn} FROM {sqlTableName}";
                     sqlConn.Open();
 
                     //Get list of printers to poll
                     try
                     {
-                        using (SqlCommand cmd = new SqlCommand(sqlQuery, sqlConn))
+                        using (SqlCommand cmd = new SqlCommand(sqlSprocNameList, sqlConn) { CommandType = CommandType.StoredProcedure })
                         {
                             using (SqlDataReader rdr = cmd.ExecuteReader())
                             {
