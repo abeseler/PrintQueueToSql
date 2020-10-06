@@ -13,7 +13,6 @@ namespace PrintQueueToSql
     public partial class Service : ServiceBase
     {
         private readonly Timer serviceTimer = new Timer();
-        private readonly int interval = int.Parse(ConfigurationManager.AppSettings["printerPollInterval"]);
         private readonly string sqlSprocNameList = ConfigurationManager.AppSettings["sqlStoredProcedureList"];
         private readonly string sqlSprocNameUpdate = ConfigurationManager.AppSettings["sqlStoredProcedureUpdate"];
         private readonly string sqlParamPrinterName = ConfigurationManager.AppSettings["sqlParamPrinterName"];
@@ -41,9 +40,9 @@ namespace PrintQueueToSql
 
         protected override void OnStart(string[] args)
         {
-            Logger.WriteMessage("Service has started...");
+            Logger.AddMessage("Service has started...");
             serviceTimer.Elapsed += new ElapsedEventHandler(OnElapsedTime);
-            serviceTimer.Interval = interval;
+            serviceTimer.Interval = int.Parse(ConfigurationManager.AppSettings["printerPollInterval"]);
             serviceTimer.Start();
         }
 
@@ -77,7 +76,7 @@ namespace PrintQueueToSql
                     }
                     catch (Exception ex)
                     {
-                        Logger.WriteMessage("[ERROR] Exception while retrieving printer list\n" + ex.ToString());
+                        Logger.AddMessage("Exception getting printer list\n" + ex.ToString());
                     }
 
                     //Poll printer queue for status and jobs and run update sproc for each one if changed
@@ -87,7 +86,7 @@ namespace PrintQueueToSql
                         {
                             using (PrintServer printServer = new LocalPrintServer())
                             {
-                                String resultsForLog = "Polling results...\n";
+                                String resultsForLog = "Polling results...";
 
                                 foreach (Printer printer in printerList)
                                 {
@@ -102,7 +101,7 @@ namespace PrintQueueToSql
                                     }
                                     catch (Exception ex)
                                     {
-                                        status = $"[POLLING ERROR] {ex.Message}";
+                                        status = $"Error: {ex.Message}";
                                         jobs = -1;
                                     }
 
@@ -117,19 +116,19 @@ namespace PrintQueueToSql
                                             cmd.ExecuteNonQuery();
                                         }
 
-                                        resultsForLog += $"\t[UPDT] {printer.name}: {jobs}: {status}\n";
+                                        resultsForLog += $"\n\t[UPDT] {printer.name}: {jobs}: {status}";
                                     }
                                     else
                                     {
-                                        resultsForLog += $"\t[POLL] {printer.name}: {jobs}: {status}\n";
+                                        resultsForLog += $"\n\t[POLL] {printer.name}: {jobs}: {status}";
                                     }
                                 }
-                                Logger.WriteMessage(resultsForLog);
+                                Logger.AddMessage(resultsForLog);
                             }
                         }
                         catch (Exception ex1)
                         {
-                            Logger.WriteMessage("[ERROR] Exception using PrintServer\n" + ex1.ToString());
+                            Logger.AddMessage("Exception using PrintServer\n" + ex1.ToString());
                         }
                     }
 
@@ -138,7 +137,7 @@ namespace PrintQueueToSql
             }
             catch (Exception ex)
             {
-                Logger.WriteMessage("[ERROR] Exception in OnElapsedTime\n" + ex.ToString());
+                Logger.AddMessage("Exception in Service.OnElapsedTime\n" + ex.ToString());
             }
 
             serviceTimer.Start();
@@ -146,7 +145,7 @@ namespace PrintQueueToSql
 
         protected override void OnStop()
         {
-            Logger.WriteMessage("Service has stopped running.");
+            Logger.AddMessage("Service has stopped running.");
         }
 
         public Boolean IsInstalled()

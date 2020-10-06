@@ -12,7 +12,7 @@ namespace PrintQueueToSql
         private readonly Service service = new Service();
         public void Start()
         {
-            Logger.WriteMessage("Started in console");
+            Logger.AddMessage("Started in console");
 
             while (running)
             {
@@ -55,12 +55,12 @@ namespace PrintQueueToSql
                     if (service.IsInstalled())
                     {
                         Console.WriteLine("Removing Windows Service...");
-                        Logger.WriteMessage("Removing Windows Service...");
+                        Logger.AddMessage("Removing Windows Service...");
                     }
                     else
                     {
                         Console.WriteLine("Installing Windows Service...");
-                        Logger.WriteMessage("Installing Windows Service...");
+                        Logger.AddMessage("Installing Windows Service...");
                     }
                     try
                     {
@@ -71,21 +71,21 @@ namespace PrintQueueToSql
                         if (result == 0)
                         {
                             message = "The operation completed successfully";
-                            Logger.WriteMessage(message);
+                            Logger.AddMessage(message);
                         }
                         else
                         {
                             message = "The operation failed with return code " + result.ToString();
-                            Logger.WriteMessage(message);
+                            Logger.AddMessage(message);
                         }
                     }
                     catch (Exception ex)
                     {
-                        Logger.WriteMessage(ex.ToString());
+                        Logger.AddMessage(ex.ToString());
                     }
                     break;
                 case "2":
-                    Logger.WriteMessage("Exiting console");
+                    Logger.AddMessage("Exiting console");
                     running = false;
                     break;
                 default:
