@@ -8,19 +8,26 @@ namespace PrintQueueToSql
 {
     class Logger
     {
-        public static string logFileName;
-        public static bool enabled = int.Parse(ConfigurationManager.AppSettings["loggingEnabled"]) == 0 ? false : true;
+        private static Queue<string> messages = new Queue<string>();
+        private static int logSize = 0;
+        private static bool enabled = int.Parse(ConfigurationManager.AppSettings["loggingEnabled"]) == 0 ? false : true;
         private static readonly int maxLogSize = int.Parse(ConfigurationManager.AppSettings["maxLogSize"]) * 1000;
-        private static readonly int interval = int.Parse(ConfigurationManager.AppSettings["maintInterval"]) * 1000;
-        private static readonly string path = AppDomain.CurrentDomain.BaseDirectory + "\\";
-        private static readonly Timer maintTimer = new Timer();
+        private static readonly string filePath = Environment.UserInteractive ? AppDomain.CurrentDomain.BaseDirectory + "\\Log_Console.txt" : AppDomain.CurrentDomain.BaseDirectory + "\\Log_Service.txt";
 
         static Logger()
         {
-            maintTimer.Elapsed += new ElapsedEventHandler(LogMaintenance);
-            maintTimer.Interval = interval;
-            maintTimer.Enabled = true;
-            logFileName = "ServiceLog.txt";
+            if (File.Exists(filePath))
+            {
+                using (StreamReader sr = new StreamReader(filePath))
+                {
+                        string line = String.Empty;
+                        while ((line = sr.ReadLine()) != null)
+                        {
+                            messages.Enqueue(line);
+                            logSize += line.Length;
+                        }
+                }
+            }
         }
 
         public static void WriteMessage(string Message)
@@ -28,50 +35,20 @@ namespace PrintQueueToSql
             if (enabled)
             {
                 Message = "[" + DateTime.Now + "] " + Message;
-                string filePath = path + logFileName;
-                if (!Directory.Exists(path))
-                {
-                    Directory.CreateDirectory(path);
-                }
-                using (StreamWriter sw = new StreamWriter(filePath, true))
-                {
-                    sw.WriteLine(Message);
-                }
-            }
-        }
+                messages.Enqueue(Message);
+                logSize += Message.Length;
 
-        private static void LogMaintenance(object sender, ElapsedEventArgs e)
-        {
-            string filePath = path + logFileName;
-            if (File.Exists(filePath))
-            {
-                long length = new FileInfo(filePath).Length;
-                if (length > maxLogSize)
+                while (logSize > maxLogSize)
                 {
-                    List<string> lines = new List<string>();
-                    using (StreamReader sr = new StreamReader(filePath))
-                    {
-                        string line = String.Empty;
-                        long leftToRemove = length - maxLogSize;
-                        while ((line = sr.ReadLine()) != null)
-                        {
-                            if (leftToRemove > 0)
-                            {
-                                leftToRemove -= line.Length;
-                            }
-                            else
-                            {
+                    Message = messages.Dequeue();
+                    logSize -= Message.Length;
+                }
 
-                                lines.Add(line);
-                            }
-                        }
-                    }
-                    using (StreamWriter sw = new StreamWriter(filePath, false))
+                using (StreamWriter sw = new StreamWriter(filePath, false))
+                {
+                    foreach (string line in messages)
                     {
-                        foreach (string line in lines)
-                        {
-                            sw.WriteLine(line);
-                        }
+                        sw.WriteLine(line);
                     }
                 }
             }
