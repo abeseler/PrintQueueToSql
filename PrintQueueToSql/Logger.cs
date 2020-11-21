@@ -64,13 +64,9 @@ namespace PrintQueueToSql
         {
             if (enabled)
             {
-                saveLogTimer.Stop();
-
                 try
                 {
                     Message = "[" + DateTime.Now + "] " + Message;
-                    messages.Enqueue(Message);
-                    logSize += Message.Length;
 
                     using (StreamWriter sw = new StreamWriter(filePath, true))
                     {
