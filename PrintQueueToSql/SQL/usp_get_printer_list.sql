@@ -36,10 +36,10 @@ SET NOCOUNT ON
 BEGIN TRY
 	SELECT
 		printer_name
-		,jobs
+		,jobs_in_queue
 		,status
 	FROM t_printer_queues WITH (NOLOCK)
-	WHERE type = 'RPT'
+	WHERE polling_enabled = 'Y'
 
 	GOTO EXIT_LABEL
 END TRY

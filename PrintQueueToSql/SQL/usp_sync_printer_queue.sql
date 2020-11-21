@@ -43,7 +43,7 @@ SET NOCOUNT ON
 BEGIN TRY
 	UPDATE t_printer_queues WITH (UPDLOCK,ROWLOCK)
 	SET status = @in_vchPrinterStatus
-		,jobs = @in_nJobsInQueue
+		,jobs_in_queue = @in_nJobsInQueue
 	WHERE printer_name = @in_vchPrinterName
 
 	GOTO EXIT_LABEL
