@@ -55,7 +55,31 @@ namespace PrintQueueToSql
                 }
                 catch(Exception ex)
                 {
-                    messages.Enqueue("Exception in Logger.AddMessage:\n" + ex.ToString());
+                    messages.Enqueue("EXCEPTION_LOGGER_ADDMESSAGE\n" + ex.ToString());
+                }
+            }
+        }
+
+        public static void WriteMessageNoWait(string Message)
+        {
+            if (enabled)
+            {
+                saveLogTimer.Stop();
+
+                try
+                {
+                    Message = "[" + DateTime.Now + "] " + Message;
+                    messages.Enqueue(Message);
+                    logSize += Message.Length;
+
+                    using (StreamWriter sw = new StreamWriter(filePath, true))
+                    {
+                        sw.WriteLine(Message);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    messages.Enqueue("EXCEPTION_LOGGER_WRITEMESSAGE\n" + ex.ToString());
                 }
             }
         }
@@ -69,26 +93,25 @@ namespace PrintQueueToSql
                 if (changed)
                 {
                     changed = false;
-                    WriteMessagesToFile(messages);
+                    
+                    using (StreamWriter sw = new StreamWriter(filePath, false))
+                    {
+                        string[] logMessages = new string[messages.Count];
+                        messages.CopyTo(logMessages, 0);
+
+                        foreach (string line in logMessages)
+                        {
+                            sw.WriteLine(line);
+                        }
+                    }
                 }
             }
             catch(Exception ex)
             {
-                messages.Enqueue("Exception in Logger.OnElapsedTime:\n" + ex.ToString());
+                messages.Enqueue("EXCEPTION_LOGGER_ONELAPSEDTIME\n" + ex.ToString());
             }
 
             saveLogTimer.Start();
-        }
-
-        private static void WriteMessagesToFile(Queue<string> logMessages)
-        {
-            using (StreamWriter sw = new StreamWriter(filePath, false))
-            {
-                foreach (string line in logMessages)
-                {
-                    sw.WriteLine(line);
-                }
-            }
         }
     }
 }
