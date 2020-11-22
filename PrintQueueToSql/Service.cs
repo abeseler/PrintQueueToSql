@@ -72,9 +72,9 @@ namespace PrintQueueToSql
                                     {
                                         printerList.Add(
                                             new Printer(
-                                                Convert.ToString(rdr.GetValue(0))   // Printer Name
-                                                ,rdr.IsDBNull(1) ? -1 : rdr.GetInt32(1)
-                                                ,Convert.ToString(rdr.GetValue(2))  // Status message
+                                                Convert.ToString(rdr.GetValue(0))           // Printer Name
+                                                ,rdr.IsDBNull(1) ? -1 : rdr.GetInt32(1)     // Number of Jobs
+                                                ,Convert.ToString(rdr.GetValue(2))          // Status message
                                             )
                                         ) ;
                                     }
