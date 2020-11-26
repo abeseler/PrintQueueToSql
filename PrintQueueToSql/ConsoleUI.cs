@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Configuration;
 using System.Diagnostics;
+using System.Linq;
+using System.Printing;
 using System.Reflection;
 
 namespace PrintQueueToSql
@@ -39,7 +41,8 @@ namespace PrintQueueToSql
             {
                 menu.Add(" 1 - Install");
             }
-            menu.Add(" 2 - Exit\n");
+            menu.Add(" 2 - List Printers");
+            menu.Add(" 3 - Exit\n");
             foreach (string item in menu)
             {
                 Console.WriteLine(item);
@@ -85,7 +88,10 @@ namespace PrintQueueToSql
                     }
                     break;
                 case "2":
-                    Logger.AddMessage("Exiting console");
+                    ListPrinterQueuesToConsole();
+                    break;
+                case "3":
+                    Logger.WriteMessageNoWait("Exiting console");
                     running = false;
                     break;
                 default:
@@ -105,6 +111,28 @@ namespace PrintQueueToSql
             proc.StartInfo.Verb = "runas";
             if (svcExists) { proc.StartInfo.Arguments += " /u"; }
             return proc;
+        }
+
+        private static void ListPrinterQueuesToConsole()
+        {
+            Logger.AddMessage("LISTING_PRINTERS");
+
+            try
+            {
+                using (PrintServer printServer = new LocalPrintServer())
+                {
+                    List<PrintQueue> printers = printServer.GetPrintQueues().ToList();
+                    foreach (PrintQueue printer in printers)
+                    {
+                        Console.WriteLine($"{printer.Name} | {printer.NumberOfJobs} | {printer.QueueStatus}");
+                        Logger.AddMessage($"{printer.Name} | {printer.NumberOfJobs} | {printer.QueueStatus}");
+                    }
+                }
+            }
+            catch (Exception ex1)
+            {
+                Logger.AddMessage($"EXCEPTION_USING_PRINTSERVER\n" + ex1.ToString());
+            }
         }
     }
 }
